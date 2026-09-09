@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 venv/
 .env
+.mem0/
 *.egg-info/
 dist/
 build/
@@ -12,6 +13,7 @@ node_modules/
 .next/
 .env.local
 .env.production
+*.tsbuildinfo
 
 # OS
 .DS_Store
@@ -23,3 +25,4 @@ node_modules/
 
 # Docker
 *.log
+
