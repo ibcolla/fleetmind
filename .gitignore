@@ -25,7 +25,3 @@ node_modules/
 
 # Docker
 *.log
-
-# GitHub Workflows (local)
-.github/workflows/
-
