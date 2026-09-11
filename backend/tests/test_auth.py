@@ -293,3 +293,33 @@ def test_malformed_auth_header(client):
     assert response.status_code in (401, 403), (
         f"Expected 401/403 for malformed header, got {response.status_code}"
     )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CORS Preflight Tests
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_cors_options_preflight_vercel_production(client):
+    """Verify CORS OPTIONS preflight succeeds for production Vercel frontend."""
+    headers = {
+        "Origin": "https://fleetminds-ten.vercel.app",
+        "Access-Control-Request-Method": "POST",
+        "Access-Control-Request-Headers": "authorization, content-type",
+    }
+    response = client.options("/agent/stream", headers=headers)
+    assert response.status_code == 200
+    assert response.headers.get("access-control-allow-origin") == "https://fleetminds-ten.vercel.app"
+    assert response.headers.get("access-control-allow-credentials") == "true"
+
+
+def test_cors_options_preflight_vercel_preview(client):
+    """Verify CORS OPTIONS preflight succeeds for Vercel preview deployments."""
+    headers = {
+        "Origin": "https://fleetminds-git-preview-123.vercel.app",
+        "Access-Control-Request-Method": "POST",
+        "Access-Control-Request-Headers": "authorization, content-type",
+    }
+    response = client.options("/agent/stream", headers=headers)
+    assert response.status_code == 200
+    assert response.headers.get("access-control-allow-origin") == "https://fleetminds-git-preview-123.vercel.app"
+

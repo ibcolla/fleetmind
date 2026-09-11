@@ -40,14 +40,34 @@ logger = logging.getLogger(__name__)
 # CORS Configuration
 # ---------------------------------------------------------------------------
 # SECURITY: allow_origins=["*"] combined with allow_credentials=True is a
-# security violation. We use an explicit allowlist.
+# security violation. We use explicit origin matching + Vercel preview regex.
 #
-# Set ALLOWED_ORIGINS in your environment (comma-separated):
-#   ALLOWED_ORIGINS=http://localhost:3000,https://your-prod-domain.com
+# Environment variables:
+#   ALLOWED_ORIGINS: comma-separated list of allowed origin URLs
+#   FRONTEND_URL: primary frontend URL (e.g. https://fleetminds-ten.vercel.app)
 # ---------------------------------------------------------------------------
 
-_raw_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000")
-ALLOWED_ORIGINS: List[str] = [o.strip() for o in _raw_origins.split(",") if o.strip()]
+_default_origins = [
+    "http://localhost:3000",
+    "http://localhost:8000",
+    "https://fleetminds-ten.vercel.app",
+    "https://fleetmind-hxg4.onrender.com",
+]
+
+_raw_origins = os.getenv("ALLOWED_ORIGINS", "")
+_frontend_url = os.getenv("FRONTEND_URL", "")
+
+ALLOWED_ORIGINS: List[str] = list(_default_origins)
+if _raw_origins:
+    ALLOWED_ORIGINS.extend([o.strip() for o in _raw_origins.split(",") if o.strip()])
+if _frontend_url and _frontend_url not in ALLOWED_ORIGINS:
+    ALLOWED_ORIGINS.append(_frontend_url.strip())
+
+# Remove duplicates while preserving order
+ALLOWED_ORIGINS = list(dict.fromkeys(ALLOWED_ORIGINS))
+
+# Regex matching all Vercel preview deployments (*.vercel.app) and local hosts
+ALLOW_ORIGIN_REGEX = r"https://.*\.vercel\.app|http://(localhost|127\.0\.0\.1)(:\d+)?"
 
 app = FastAPI(
     title="FleetMind API",
@@ -58,10 +78,12 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
+    allow_origin_regex=ALLOW_ORIGIN_REGEX,
     allow_credentials=True,
     allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type", "Accept"],
+    allow_headers=["Authorization", "Content-Type", "Accept", "X-Workspace-ID"],
 )
+
 
 agent = FleetMindAgent()
 
